@@ -18,12 +18,16 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false,
-    "types": ["frame-master-plugin-image-optimizer/types"],
+    "types": [
+      "frame-master-plugin-image-optimizer/types",
+      "./worker-configuration.d.ts"
+    ],
     "paths": {
       "@images/*": ["./images/*"],
-      "@static/*": ["./static/*"]
+      "@static/*": ["./static/*"],
+      "@api/*": ["./src/actions/api/*"]
     }
   },
   "include": ["src", ".frame-master/frame-master-custom-type.d.ts"],
-  "exclude": [".frame-master/build"]
+  "exclude": ["node_modules", ".frame-master/build"]
 }

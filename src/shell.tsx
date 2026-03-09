@@ -1,3 +1,4 @@
+import { createClient } from "./auth";
 import { APP_DATA } from "./common";
 
 export default function RenderShell({
@@ -14,7 +15,11 @@ export default function RenderShell({
         <link rel="icon" href="/static/favicon.ico" />
         <title>{APP_DATA.projectName}</title>
       </head>
-      <body id="root">{children}</body>
+      <body id="root">
+        <globalThis.AUTH.Provider value={createClient()}>
+          {children}
+        </globalThis.AUTH.Provider>
+      </body>
     </html>
   );
 }

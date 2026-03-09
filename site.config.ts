@@ -32,8 +32,5 @@ export default {
       description: "This is a flawlessly optimized Frame-Master site.",
       image: "https://myawesomesite.com/twitter-image.jpg",
     },
-    customTags: [
-      '<meta name="google-site-verification" content="your-verification-code">',
-    ],
   },
 } satisfies SiteConfigType;

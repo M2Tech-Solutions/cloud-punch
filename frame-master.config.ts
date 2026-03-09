@@ -10,6 +10,7 @@ import SiteConfig from "./site.config";
 import AutoSiteMap from "frame-master-plugin-auto-sitemap";
 import { builder } from "frame-master/build";
 import functionAction from "frame-master-plugin-cloudflare-pages-functions-action";
+import EnvToHtml from "frame-master-plugin-env-in-html";
 
 export default {
   HTTPServer: {
@@ -19,11 +20,13 @@ export default {
     ReactToHtml({
       shellPath: "src/shell.tsx",
       srcDir: "src/pages",
+      entrypointExtensions: [".tsx"],
     }),
     ApplyReact({
       clientShellPath: "src/client-wrapper.tsx",
       route: "src/pages",
       style: "nextjs",
+      entrypointExtensions: [".tsx"],
     }),
     TailwindPlugin({
       inputFile: "static/tailwind.css",
@@ -66,6 +69,9 @@ export default {
     AutoSiteMap({
       baseUrl: SiteConfig.siteUrl,
       authorizedExtensions: ["html"],
+    }),
+    EnvToHtml({
+      entries: ["PUBLIC_"],
     }),
     {
       name: "static-assets",

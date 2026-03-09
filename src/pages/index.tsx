@@ -77,7 +77,7 @@ export default function IndexPage() {
           <div className="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center border border-indigo-500/20 shadow-inner">
             <Timer className="w-7 h-7 text-indigo-400" />
           </div>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-400 tracking-tight">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-linear-to-br from-white to-slate-400 tracking-tight">
             Session de travail
           </h2>
         </div>
