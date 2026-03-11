@@ -1,1 +1,9 @@
 @import "tailwindcss";
+
+/* Class-based dark mode using data-theme attribute on <html> */
+@variant dark (&:where([data-theme=dark],[data-theme=dark] *));
+
+/* Smooth theme transitions on structural elements */
+html {
+  transition: background-color 250ms ease, color 250ms ease;
+}

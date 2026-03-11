@@ -1,293 +1,120 @@
-import React, { useState, useEffect } from "react";
-import { mockProjects, mockTasks } from "../../mocks/data";
-import { GET as getEmployees } from "@api/employe";
-import { FolderPlus, CheckSquare, Plus, Banknote } from "lucide-react";
+import { useState, useEffect } from "react";
+import { GET as getWorkTime } from "@api/worktime";
+import { GET as getUsers } from "@api/admin/users";
+import { GET as getSalaries } from "@api/admin/salary";
+import { Banknote } from "lucide-react";
+import PaymentTable, { type PaymentRecord } from "../../components/PaymentTable";
+import WorktimeTable from "../../components/WorktimeTable";
+import EmployeeCard from "../../components/EmployeeCard";
+import ProjectTasksCard from "../../components/ProjectTasksCard";
+import type { WorktimeType } from "@db/schema";
+import { useProjects } from "@hooks/project";
+import type { UserResponseSchemaType } from "openauthster-shared/endpoints";
 
 export default function AdminPage() {
-  const [newProject, setNewProject] = useState("");
-  const [newTask, setNewTask] = useState("");
-  const [selectedProjectId, setSelectedProjectId] = useState<number | "">("");
+  const [paymentRecords, setPaymentRecords] = useState<PaymentRecord[]>([]);
+  const [hourlyRates, setHourlyRates] = useState<Record<string, number>>({});
+  const [error, setError] = useState<string | null>(null);
+  const [userList, setUserList] = useState<
+    Exclude<UserResponseSchemaType["data"], null>["users"]
+  >([]);
 
-  const [employees, setEmployees] = useState<any[]>([]);
-  const [payPeriod, setPayPeriod] = useState("");
-  // Mocking payment status state: { employeeId: { week1: status, week2: status, ... } }
-  const [paymentsState, setPaymentsState] = useState<
-    Record<string, Record<string, string>>
-  >({});
+  const { projects, loading: loadingProjects } = useProjects();
 
   useEffect(() => {
-    getEmployees().then((res: any) => {
-      if (res && res.success && res.data) {
-        const fetchedEmployees = Array.isArray(res.data)
-          ? res.data
-          : res.data.items || res.data.users || [];
-        setEmployees(fetchedEmployees);
-
-        // Initialize mock payments state
-        const initialPayments: Record<string, Record<string, string>> = {};
-        fetchedEmployees.forEach((emp: any) => {
-          initialPayments[emp.id] = {
-            1: "pending",
-            2: "pending",
-            3: "pending",
-            4: "pending",
-            5: "pending",
-          };
-        });
-        setPaymentsState(initialPayments);
+    getWorkTime().then((res) => {
+      if (!res.success) {
+        setError(
+          "Une erreur est survenue lors de la récupération des employés.",
+        );
+        return;
+      }
+      setPaymentRecords(
+        res.workingHours?.map<PaymentRecord>((wh) => ({
+          id: wh.id,
+          userId: wh.userId,
+          employeeName: wh.userName || wh.userId,
+          fromDate: new Date(wh.punchIn!),
+          toDate: new Date(wh.punchOut!),
+          status: wh.status,
+        })) ?? [],
+      );
+    });
+    getUsers().then((res) => {
+      if (!res.error) {
+        setUserList(
+          (res.users?.users as Exclude<
+            UserResponseSchemaType["data"],
+            null
+          >["users"]) || [],
+        );
+      }
+    });
+    getSalaries().then((res) => {
+      if (res.success && res.data) {
+        const map: Record<string, number> = {};
+        for (const { userId, salary } of res.data as Array<{ userId: string; salary: number }>) {
+          if (salary) map[userId] = salary;
+        }
+        setHourlyRates(map);
       }
     });
   }, []);
 
-  const handleAddProject = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newProject.trim()) {
-      alert(`Projet "${newProject}" ajouté (Mock)`);
-      setNewProject("");
-    }
-  };
-
-  const handleAddTask = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newTask.trim() && selectedProjectId) {
-      alert(`Tâche "${newTask}" ajoutée au projet (Mock)`);
-      setNewTask("");
-    }
-  };
-
-  const handleUpdatePayment = (
-    employeeId: string,
-    week: string,
-    currentStatus: string,
+  const handleTogglePaymentStatus = (
+    ids: number[],
+    nextStatus: WorktimeType["status"],
   ) => {
-    if (!payPeriod) {
-      alert(
-        "Veuillez sélectionner une période (Mois/Année) avant de modifier un paiement.",
-      );
-      return;
-    }
-
-    const nextStatus = currentStatus === "paid" ? "pending" : "paid";
-    setPaymentsState((prev) => ({
-      ...prev,
-      [employeeId]: {
-        ...prev[employeeId],
-        [week]: nextStatus,
-      },
-    }));
-
-    // In a real app, this would be an API call
-    console.log(
-      `Updated payment for employee ${employeeId}, week ${week} in ${payPeriod} to ${nextStatus}`,
+    setPaymentRecords((prev) =>
+      prev.map((rec) =>
+        ids.includes(rec.id) ? { ...rec, status: nextStatus } : rec,
+      ),
     );
   };
 
   return (
-    <div className="p-6 md:p-10 w-full max-w-5xl mx-auto">
-      <header className="mb-12">
-        <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">
+    <div className="p-6 md:p-8 w-full max-w-5xl mx-auto">
+      <header className="mb-8">
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
           Administration
         </h2>
-        <p className="text-slate-400">
-          Configuration de l'environnement de travail.
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          Gérez les projets, les tâches et les paiements.
         </p>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        {/* Project Form */}
-        <div className="bg-[#111111] rounded-2xl border border-white/5 shadow-xl overflow-hidden flex flex-col">
-          <div className="p-6 border-b border-white/5 bg-white/[0.02] flex items-center gap-4">
-            <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400">
-              <FolderPlus size={20} />
-            </div>
-            <h3 className="text-lg font-bold text-white">Nouveau Projet</h3>
-          </div>
-
-          <div className="p-6 flex-1">
-            <form onSubmit={handleAddProject} className="flex flex-col h-full">
-              <div className="mb-8 flex-1">
-                <label className="block text-xs font-semibold uppercase tracking-wider mb-3 text-slate-400">
-                  Nom du projet
-                </label>
-                <input
-                  type="text"
-                  value={newProject}
-                  onChange={(e) => setNewProject(e.target.value)}
-                  className="w-full bg-white/5 p-4 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-white placeholder-slate-600 transition-all outline-none"
-                  placeholder="Ex: Refonte Site Web Corp"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full p-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-all flex justify-center items-center gap-2 active:scale-[0.98] shadow-lg shadow-indigo-500/20"
-              >
-                <Plus size={18} /> Créer le projet
-              </button>
-            </form>
-          </div>
+      {error && (
+        <div className="mb-6 flex items-center gap-3 p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl text-red-600 dark:text-red-400 text-sm">
+          {error}
         </div>
+      )}
 
-        {/* Task Form */}
-        <div className="bg-[#111111] rounded-2xl border border-white/5 shadow-xl overflow-hidden flex flex-col">
-          <div className="p-6 border-b border-white/5 bg-white/[0.02] flex items-center gap-4">
-            <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">
-              <CheckSquare size={20} />
-            </div>
-            <h3 className="text-lg font-bold text-white">Nouvelle Tâche</h3>
+      <EmployeeCard users={userList} />
+      <ProjectTasksCard projects={projects} loadingProjects={loadingProjects} />
+      <WorktimeTable users={userList} projects={projects} />
+
+      {/* Payment table */}
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-white/7 shadow-sm dark:shadow-none overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 dark:border-white/5 flex items-center gap-3">
+          <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
+            <Banknote size={16} />
           </div>
-
-          <div className="p-6 flex-1">
-            <form onSubmit={handleAddTask} className="flex flex-col h-full">
-              <div className="mb-5">
-                <label className="block text-xs font-semibold uppercase tracking-wider mb-3 text-slate-400">
-                  Projet parent
-                </label>
-                <select
-                  value={selectedProjectId}
-                  onChange={(e) => setSelectedProjectId(Number(e.target.value))}
-                  className="w-full bg-white/5 p-4 rounded-xl border border-white/10 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-white transition-all outline-none appearance-none"
-                  required
-                >
-                  <option
-                    value=""
-                    disabled
-                    className="bg-[#111] text-slate-500"
-                  >
-                    Sélectionnez un projet de rattachement...
-                  </option>
-                  {mockProjects.map((p) => (
-                    <option
-                      key={p.id}
-                      value={p.id}
-                      className="bg-[#111] text-white"
-                    >
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="mb-8 flex-1">
-                <label className="block text-xs font-semibold uppercase tracking-wider mb-3 text-slate-400">
-                  Nom de la tâche
-                </label>
-                <input
-                  type="text"
-                  value={newTask}
-                  onChange={(e) => setNewTask(e.target.value)}
-                  className="w-full bg-white/5 p-4 rounded-xl border border-white/10 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-white placeholder-slate-600 transition-all outline-none"
-                  placeholder="Ex: Implémentation du panier"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full p-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-all flex justify-center items-center gap-2 active:scale-[0.98] shadow-lg shadow-emerald-500/20"
-              >
-                <Plus size={18} /> Associer la tâche
-              </button>
-            </form>
-          </div>
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+            Salaires & Paiements
+          </h3>
         </div>
-      </div>
-
-      {/* Payment Status Table */}
-      <div className="bg-[#111111] rounded-2xl border border-white/5 shadow-xl overflow-hidden flex flex-col w-full mb-8">
-        <div className="p-6 border-b border-white/5 bg-white/[0.02] flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-4">
-            <div className="p-2 bg-amber-500/10 rounded-lg text-amber-400">
-              <Banknote size={20} />
+        <div className="overflow-x-auto">
+          {paymentRecords.length === 0 ? (
+            <div className="py-12 text-center text-sm text-slate-400 dark:text-slate-500">
+              Chargement des données ou aucun paiement trouvé...
             </div>
-            <h3 className="text-lg font-bold text-white">
-              Salaires & Paiements
-            </h3>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Période
-            </span>
-            <input
-              type="month"
-              value={payPeriod}
-              onChange={(e) => setPayPeriod(e.target.value)}
-              className="bg-white/5 p-2 px-4 rounded-xl border border-white/10 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-slate-600 transition-all outline-none"
-              required
+          ) : (
+            <PaymentTable
+              data={paymentRecords}
+              hourlyRates={hourlyRates}
+              onToggleStatus={handleTogglePaymentStatus}
             />
-          </div>
-        </div>
-
-        <div className="p-0 overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-white/10 bg-white/5">
-                <th className="p-4 text-sm font-semibold text-slate-300 whitespace-nowrap">
-                  Employé
-                </th>
-                {[1, 2, 3, 4, 5].map((week) => (
-                  <th
-                    key={week}
-                    className="p-4 text-sm text-center font-semibold text-slate-300"
-                  >
-                    Semaine {week}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5 text-sm">
-              {employees.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="p-6 text-center text-slate-400">
-                    Chargement des employés ou aucun employé trouvé...
-                  </td>
-                </tr>
-              ) : (
-                employees.map((emp: any) => {
-                  const empPayments = paymentsState[emp.id] || {
-                    1: "pending",
-                    2: "pending",
-                    3: "pending",
-                    4: "pending",
-                    5: "pending",
-                  };
-                  return (
-                    <tr
-                      key={emp.id}
-                      className="hover:bg-white/[0.02] transition-colors"
-                    >
-                      <td className="p-4 font-medium text-white whitespace-nowrap">
-                        {emp.name || emp.email || emp.id}
-                      </td>
-                      {[1, 2, 3, 4, 5].map((week) => {
-                        const status = empPayments[week.toString()]!;
-                        const isPaid = status === "paid";
-                        return (
-                          <td key={week} className="p-4 text-center">
-                            <button
-                              onClick={() =>
-                                handleUpdatePayment(
-                                  emp.id,
-                                  week.toString(),
-                                  status,
-                                )
-                              }
-                              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${
-                                isPaid
-                                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
-                                  : "bg-amber-500/10 border-amber-500/30 text-amber-500 hover:bg-amber-500/20"
-                              }`}
-                            >
-                              {isPaid ? "Payé" : "En attente"}
-                            </button>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+          )}
         </div>
       </div>
     </div>

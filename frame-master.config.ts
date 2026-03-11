@@ -11,6 +11,7 @@ import AutoSiteMap from "frame-master-plugin-auto-sitemap";
 import { builder } from "frame-master/build";
 import functionAction from "frame-master-plugin-cloudflare-pages-functions-action";
 import EnvToHtml from "frame-master-plugin-env-in-html";
+import type { ClientType } from "./src/auth";
 
 export default {
   HTTPServer: {
@@ -96,6 +97,17 @@ export default {
     functionAction({
       outDir: ".frame-master/build",
       actionBasePath: "src/actions",
+      customFetch: ((input, init) => {
+        const client = (globalThis as any)._CLIENT_ as ClientType;
+        if (!client) return fetch(input, init);
+        return fetch(input, {
+          ...init,
+          headers: new Headers({
+            ...init?.headers,
+            Authorization: `Bearer ${client.getToken()}`,
+          }),
+        });
+      }) as typeof fetch,
     }),
   ],
 } satisfies FrameMasterConfig;

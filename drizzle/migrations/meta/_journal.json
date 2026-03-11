@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1773159768370,
+      "tag": "0000_conscious_charles_xavier",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1773162490688,
+      "tag": "0001_woozy_ink",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1773163211519,
+      "tag": "0002_dazzling_harry_osborn",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1773245259188,
+      "tag": "0003_complex_praxagora",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1741651200000,
+      "tag": "0004_user_salary",
+      "breakpoints": true
+    }
+  ]
+}

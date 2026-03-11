@@ -1,0 +1,1 @@
+ALTER TABLE `worktime` ADD `userName` text NOT NULL;

@@ -25,9 +25,15 @@
     "paths": {
       "@images/*": ["./images/*"],
       "@static/*": ["./static/*"],
-      "@api/*": ["./src/actions/api/*"]
+      "@api/*": ["./src/actions/api/*"],
+      "@db/*": ["./drizzle/*"],
+      "@auth": ["./src/auth.ts"],
+      "@cf-action": [
+        "./node_modules/frame-master-plugin-cloudflare-pages-functions-action/src/context.ts"
+      ],
+      "@hooks/*": ["./src/hooks/*"]
     }
   },
-  "include": ["src", ".frame-master/frame-master-custom-type.d.ts"],
+  "include": ["src", ".frame-master/frame-master-custom-type.d.ts", "bin"],
   "exclude": ["node_modules", ".frame-master/build"]
 }

@@ -4,14 +4,21 @@ import {
 } from "openauthster-shared/client/user";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 
-type PublicSession = {
-  name: string;
-  passkeyRegistered: boolean;
+type CommonSession = {
+  role: "admin" | "employee";
 };
 
-type PrivateSession = {
+export type PublicSession = {
+  name: string;
+  passkeyRegistered: boolean;
+} & CommonSession;
+
+export type PrivateSession = {
   workStartAt: string;
-};
+  salary?: number;
+} & CommonSession;
+
+export type ClientType = OpenAuthsterClient<PublicSession, PrivateSession>;
 
 declare global {
   var AUTH: React.Context<
@@ -23,15 +30,12 @@ declare global {
       }
     >
   >;
+  var _CLIENT_: ClientType;
 }
 
-globalThis.AUTH ??= createContext<
-  OpenAuthsterClient<PublicSession, PrivateSession>
->(null as any);
+globalThis.AUTH ??= createContext<ClientType>(null as any);
 
-export function createClient(props?: {
-  secret?: string;
-}): OpenAuthsterClient<PublicSession, PrivateSession> {
+export function createClient(props?: { secret?: string }): ClientType {
   return createOpenAuthsterClient({
     clientID: "cloud_punch_m2",
     issuerURI:
@@ -41,12 +45,12 @@ export function createClient(props?: {
   });
 }
 
-export function useAuth(): OpenAuthsterClient<PublicSession, PrivateSession> {
+export function useAuth(): ClientType {
   const id = useRef(Math.random().toString(36).substring(2)).current;
   const [state, setState] = useState<string | null>(null);
   const client =
     typeof window == "undefined"
-      ? ({} as OpenAuthsterClient<PublicSession, PrivateSession>)
+      ? ({} as ClientType)
       : useContext(globalThis.AUTH);
 
   useEffect(() => {
@@ -59,4 +63,8 @@ export function useAuth(): OpenAuthsterClient<PublicSession, PrivateSession> {
   }, []);
 
   return client;
+}
+
+export function createActionFetcher(client: ClientType) {
+  globalThis._CLIENT_ ??= client;
 }

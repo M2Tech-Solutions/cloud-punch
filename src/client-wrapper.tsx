@@ -2,11 +2,15 @@
 // you can create your own version of the routerHost
 
 import { RouterHost } from "frame-master-plugin-apply-react/router";
-import { StrictMode, useRef, type JSX } from "react";
-import { createClient } from "./auth";
+import { StrictMode, useEffect, useRef, type JSX } from "react";
+import { createActionFetcher, createClient } from "./auth";
 
 export default function ClientWrapper({ children }: { children: JSX.Element }) {
   const client = useRef(createClient()).current;
+
+  useEffect(() => {
+    createActionFetcher(client);
+  }, [client]);
 
   return (
     <StrictMode>

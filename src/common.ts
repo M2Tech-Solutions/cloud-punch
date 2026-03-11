@@ -1,3 +1,3 @@
 export const APP_DATA = {
-  projectName: "MY_PROJECT_NAME",
+  projectName: "Punch Master",
 } as const;

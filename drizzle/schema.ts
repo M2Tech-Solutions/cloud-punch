@@ -1,24 +1,11 @@
-import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
-
-export type WorktimeType = typeof worktimeTable.$inferSelect & {
-  status: "pending" | "approved" | "rejected";
-};
-export const worktimeTable = sqliteTable("worktime", {
-  id: integer().primaryKey({ autoIncrement: true }),
-  userId: text().notNull(),
-  date: text().notNull(),
-  punchIn: integer({ mode: "timestamp_ms" }),
-  punchOut: integer({ mode: "timestamp_ms" }),
-  status: text().notNull(),
-});
+import { sqliteTable, integer, real, text } from "drizzle-orm/sqlite-core";
 
 export type ProjectType = typeof projectTable.$inferSelect;
 export const projectTable = sqliteTable("project", {
   id: integer().primaryKey({ autoIncrement: true }),
   name: text().notNull(),
   description: text(),
-  createdAt: integer({ mode: "timestamp_ms" }),
-  status: text().notNull(),
+  createdAt: integer(),
 });
 
 export type TaskType = typeof taskTable.$inferSelect & {
@@ -29,7 +16,22 @@ export const taskTable = sqliteTable("tasks", {
   projectId: integer().references(() => projectTable.id),
   name: text().notNull(),
   description: text(),
-  deadLine: integer({ mode: "timestamp_ms" }),
-  createdAt: integer({ mode: "timestamp_ms" }),
+  deadLine: integer(),
+  createdAt: integer(),
+  status: text().notNull(),
+});
+
+export type WorktimeType = typeof worktimeTable.$inferSelect & {
+  status: "pending" | "approved" | "rejected" | "fulfilled" | "active";
+};
+export const worktimeTable = sqliteTable("worktime", {
+  id: integer().primaryKey({ autoIncrement: true }),
+  userName: text().notNull(),
+  userId: text().notNull(),
+  date: integer().notNull(),
+  punchIn: integer(),
+  punchOut: integer(),
+  project: integer().references(() => projectTable.id),
+  task: integer().references(() => taskTable.id),
   status: text().notNull(),
 });

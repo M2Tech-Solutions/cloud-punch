@@ -13,7 +13,8 @@
     {
       "binding": "DB",
       "database_name": "cloud-punch-db",
-      "database_id": "99bb09ca-0064-4b58-91b8-14fa6133267b"
+      "database_id": "99bb09ca-0064-4b58-91b8-14fa6133267b",
+      "migrations_dir": "./drizzle/migrations"
     }
   ]
 }
