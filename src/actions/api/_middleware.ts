@@ -8,7 +8,10 @@ export async function onRequest(context: EventContext<Env, any, Data>) {
     return context.next();
   }
 
-  const client = createClient({ secret: context.env.AUTH_SECRET });
+  const client = createClient({
+    secret: context.env.AUTH_SECRET,
+    redirectURI: context.env.PUBLIC_REDIRECT_URI,
+  });
   await client.setTokenFromRequest(context.request as unknown as Request);
 
   if (!client.isAuthenticated) {

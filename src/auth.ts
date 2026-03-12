@@ -35,12 +35,15 @@ declare global {
 
 globalThis.AUTH ??= createContext<ClientType>(null as any);
 
-export function createClient(props?: { secret?: string }): ClientType {
+export function createClient(props: {
+  secret?: string;
+  redirectURI: string;
+}): ClientType {
   return createOpenAuthsterClient({
     clientID: "cloud_punch_m2",
     issuerURI:
       "https://92842b1c631342e8b8da135e4ee2ba75-auth-issuer.m2-tech.ca",
-    redirectURI: process.env.PUBLIC_REDIRECT_URI!,
+    redirectURI: props.redirectURI,
     secret: props?.secret,
   });
 }

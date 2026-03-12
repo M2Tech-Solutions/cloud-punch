@@ -22,7 +22,7 @@ export default function RenderShell({
         <title>{APP_DATA.projectName}</title>
       </head>
       <body id="root">
-        <globalThis.AUTH.Provider value={createClient()}>
+        <globalThis.AUTH.Provider value={createClient({ redirectURI: "" })}>
           {children}
         </globalThis.AUTH.Provider>
       </body>

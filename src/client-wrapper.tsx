@@ -6,7 +6,9 @@ import { StrictMode, useEffect, useRef, type JSX } from "react";
 import { createActionFetcher, createClient } from "./auth";
 
 export default function ClientWrapper({ children }: { children: JSX.Element }) {
-  const client = useRef(createClient()).current;
+  const client = useRef(
+    createClient({ redirectURI: process.env.PUBLIC_REDIRECT_URI! }),
+  ).current;
 
   useEffect(() => {
     createActionFetcher(client);
