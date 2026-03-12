@@ -40,7 +40,7 @@ export function createClient(props?: { secret?: string }): ClientType {
     clientID: "cloud_punch_m2",
     issuerURI:
       "https://92842b1c631342e8b8da135e4ee2ba75-auth-issuer.m2-tech.ca",
-    redirectURI: "http://localhost:3001",
+    redirectURI: process.env.PUBLIC_REDIRECT_URI!,
     secret: props?.secret,
   });
 }

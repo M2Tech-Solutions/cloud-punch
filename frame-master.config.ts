@@ -72,7 +72,8 @@ export default {
       authorizedExtensions: ["html"],
     }),
     EnvToHtml({
-      entries: ["PUBLIC_"],
+      prefix: "PUBLIC_",
+      entries: ["NODE_ENV"],
     }),
     {
       name: "static-assets",
