@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
-import { GET as getWorkTime } from "@api/worktime";
+import { GET as getWorkTime } from "@api/admin/worktime";
 import { GET as getUsers } from "@api/admin/users";
 import { GET as getSalaries } from "@api/admin/salary";
 import { Banknote } from "lucide-react";
-import PaymentTable, { type PaymentRecord } from "../../components/PaymentTable";
+import PaymentTable, {
+  type PaymentRecord,
+} from "../../components/PaymentTable";
 import WorktimeTable from "../../components/WorktimeTable";
 import EmployeeCard from "../../components/EmployeeCard";
 import ProjectTasksCard from "../../components/ProjectTasksCard";
@@ -23,21 +25,17 @@ export default function AdminPage() {
 
   useEffect(() => {
     getWorkTime().then((res) => {
-      if (!res.success) {
-        setError(
-          "Une erreur est survenue lors de la récupération des employés.",
-        );
-        return;
-      }
       setPaymentRecords(
-        res.workingHours?.map<PaymentRecord>((wh) => ({
-          id: wh.id,
-          userId: wh.userId,
-          employeeName: wh.userName || wh.userId,
-          fromDate: new Date(wh.punchIn!),
-          toDate: new Date(wh.punchOut!),
-          status: wh.status,
-        })) ?? [],
+        res
+          ?.map<PaymentRecord>((wh) => ({
+            id: wh.id,
+            userId: wh.userId,
+            employeeName: wh.userName || wh.userId,
+            fromDate: new Date(wh.punchIn!),
+            toDate: new Date(wh.punchOut!),
+            status: wh.status,
+          }))
+          .filter((wh) => wh.status !== "active") ?? [],
       );
     });
     getUsers().then((res) => {
@@ -53,7 +51,10 @@ export default function AdminPage() {
     getSalaries().then((res) => {
       if (res.success && res.data) {
         const map: Record<string, number> = {};
-        for (const { userId, salary } of res.data as Array<{ userId: string; salary: number }>) {
+        for (const { userId, salary } of res.data as Array<{
+          userId: string;
+          salary: number;
+        }>) {
           if (salary) map[userId] = salary;
         }
         setHourlyRates(map);

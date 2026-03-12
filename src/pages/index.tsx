@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
-import { mockProjects, mockTasks } from "../mocks/data";
 import { Play, Square, Timer } from "lucide-react";
+import { useProjects } from "@hooks/project";
+import { GET as getTasks } from "@api/admin/task";
+import { PUT as updateWorktime } from "@api/worktime";
+import type { TaskType } from "@db/schema";
 
 export default function IndexPage() {
   const [projectId, setProjectId] = useState<number | null>(null);
@@ -8,6 +11,9 @@ export default function IndexPage() {
   const [isPunching, setIsPunching] = useState(false);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [tasks, setTasks] = useState<TaskType[]>([]);
+
+  const { projects, loading: loadingProjects } = useProjects();
 
   useEffect(() => {
     const storedState = localStorage.getItem("punch-master-timer");
@@ -23,6 +29,15 @@ export default function IndexPage() {
   }, []);
 
   useEffect(() => {
+    if (!projectId) {
+      setTasks([]);
+      setTaskId(null);
+      return;
+    }
+    getTasks(projectId).then((res) => setTasks(res as TaskType[]));
+  }, [projectId]);
+
+  useEffect(() => {
     let interval: any;
     if (isPunching && startTime) {
       interval = setInterval(() => {
@@ -34,11 +49,23 @@ export default function IndexPage() {
     return () => clearInterval(interval);
   }, [isPunching, startTime]);
 
-  const handlePunch = () => {
+  const handlePunch = async () => {
     if (!isPunching) {
       if (!projectId || !taskId)
         return alert("Veuillez sélectionner un projet et une tâche.");
       const start = Date.now();
+      const result = await updateWorktime({
+        action: "punch-in",
+        payload: {
+          status: "active",
+          project: projectId,
+          task: taskId,
+          date: start,
+        },
+      });
+      if (!result.success) {
+        return alert(result.error || "Erreur lors du pointage.");
+      }
       setStartTime(start);
       setIsPunching(true);
       localStorage.setItem(
@@ -51,6 +78,10 @@ export default function IndexPage() {
         }),
       );
     } else {
+      const result = await updateWorktime({ action: "punch-out", payload: {} });
+      if (!result?.success) {
+        return alert(result?.error || "Erreur lors de l'arrêt du pointage.");
+      }
       setIsPunching(false);
       setStartTime(null);
       localStorage.removeItem("punch-master-timer");
@@ -66,8 +97,6 @@ export default function IndexPage() {
       .toString()
       .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   };
-
-  const availableTasks = mockTasks.filter((t) => t.projectId === projectId);
 
   return (
     <div className="p-6 md:p-8 w-full flex flex-col gap-6">
@@ -100,16 +129,24 @@ export default function IndexPage() {
                   Projet
                 </label>
                 <select
-                  className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-200 rounded-xl px-4 py-3 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50"
+                  className="w-full bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-200 rounded-xl px-4 py-3 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50"
                   value={projectId || ""}
                   onChange={(e) => setProjectId(Number(e.target.value))}
-                  disabled={isPunching}
+                  disabled={isPunching || loadingProjects}
                 >
-                  <option value="" disabled className="text-slate-400">
+                  <option
+                    value=""
+                    disabled
+                    className="dark:bg-zinc-800 text-slate-400"
+                  >
                     Sélectionnez un projet...
                   </option>
-                  {mockProjects.map((p) => (
-                    <option key={p.id} value={p.id}>
+                  {projects.map((p) => (
+                    <option
+                      key={p.id}
+                      value={p.id}
+                      className="dark:bg-zinc-800 dark:text-slate-200"
+                    >
                       {p.name}
                     </option>
                   ))}
@@ -121,16 +158,30 @@ export default function IndexPage() {
                   Tâche
                 </label>
                 <select
-                  className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-200 rounded-xl px-4 py-3 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50"
+                  className="w-full bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-200 rounded-xl px-4 py-3 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50"
                   value={taskId || ""}
                   onChange={(e) => setTaskId(Number(e.target.value))}
                   disabled={isPunching || !projectId}
                 >
-                  <option value="" disabled className="text-slate-400">
+                  <option
+                    value=""
+                    disabled
+                    className="dark:bg-zinc-800 text-slate-400"
+                  >
                     Sélectionnez une tâche...
                   </option>
-                  {availableTasks.map((t) => (
-                    <option key={t.id} value={t.id}>
+                  <option
+                    value={-1}
+                    className="dark:bg-zinc-800 dark:text-slate-200"
+                  >
+                    Aucune tâche (optionnel)
+                  </option>
+                  {tasks.map((t) => (
+                    <option
+                      key={t.id}
+                      value={t.id}
+                      className="dark:bg-zinc-800 dark:text-slate-200"
+                    >
                       {t.name}
                     </option>
                   ))}

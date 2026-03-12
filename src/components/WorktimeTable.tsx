@@ -438,9 +438,7 @@ export default function WorktimeTable({ users, projects }: WorktimeTableProps) {
                       ...f,
                       userId: e.target.value,
                       userName:
-                        (user?.data as { name?: string })?.name ??
-                        user?.identifier ??
-                        "",
+                        (user?.session_public!.name as string) ?? "nom inconnu",
                     }));
                   }}
                   disabled={saving}
@@ -459,7 +457,8 @@ export default function WorktimeTable({ users, projects }: WorktimeTableProps) {
                       value={u.id}
                       className="bg-white dark:bg-zinc-800 text-slate-900 dark:text-white"
                     >
-                      {(u.data as { name?: string })?.name ?? u.identifier}
+                      {(u.session_public as { name?: string })?.name ??
+                        u.identifier}
                     </option>
                   ))}
                 </select>

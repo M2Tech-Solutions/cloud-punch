@@ -7,14 +7,18 @@ import { desc, eq } from "drizzle-orm";
 /**
  * Get all worktime entries, newest first (admin).
  */
-export async function GET() {
+export async function GET(
+  filter?: Partial<{ page: number; pageSize: number }>,
+) {
   const ctx = getContext<Env, any, Data>(arguments);
   const db = drizzle(ctx.env.DB);
   return db
     .select()
     .from(worktimeTable)
     .orderBy(desc(worktimeTable.date))
-    .all();
+    .limit(filter?.pageSize ?? 100)
+    .offset(filter?.page ? (filter.page - 1) * (filter.pageSize ?? 100) : 0)
+    .all() as Promise<WorktimeType[]>;
 }
 
 /**
