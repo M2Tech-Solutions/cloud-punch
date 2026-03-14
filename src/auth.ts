@@ -38,6 +38,7 @@ globalThis.AUTH ??= createContext<ClientType>(null as any);
 export function createClient(props: {
   secret?: string;
   redirectURI: string;
+  qrAuthFlowStartCallback?: () => Promise<boolean> | boolean;
 }): ClientType {
   return createOpenAuthsterClient({
     clientID: "cloud_punch_m2",
@@ -45,6 +46,11 @@ export function createClient(props: {
       "https://92842b1c631342e8b8da135e4ee2ba75-auth-issuer.m2-tech.ca",
     redirectURI: props.redirectURI,
     secret: props?.secret,
+    authFlowCallbacks: {
+      onQRAuthFlowStart() {
+        return props.qrAuthFlowStartCallback?.() ?? true;
+      },
+    },
   });
 }
 

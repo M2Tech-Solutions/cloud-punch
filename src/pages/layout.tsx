@@ -10,6 +10,9 @@ import {
   LogIn,
   Sun,
   Moon,
+  KeyRound,
+  Fingerprint,
+  QrCode,
 } from "lucide-react";
 import { useAuth } from "../auth";
 
@@ -37,6 +40,7 @@ export default function Layout({ children }: { children: React.JSX.Element }) {
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-[#09090B] text-slate-900 dark:text-slate-200 font-sans flex flex-col md:flex-row antialiased selection:bg-indigo-500/30">
+      <LoginFloat />
       {/* Mobile Top Bar */}
       <div className="md:hidden flex items-center justify-between px-4 py-3 bg-white dark:bg-[#111113] border-b border-slate-200 dark:border-white/5 sticky top-0 z-40 shadow-sm dark:shadow-none">
         <div className="flex items-center gap-2.5">
@@ -240,6 +244,89 @@ function UserLoginStatus() {
       <span className="text-slate-400 dark:text-slate-500">
         {isLogged ? "En ligne" : "Hors ligne"}
       </span>
+    </div>
+  );
+}
+
+function LoginFloat() {
+  const auth = useAuth();
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    auth.addInitializationListener("login-float", () => setInitialized(true));
+  }, []);
+
+  if (!initialized || auth.isAuthenticated) return null;
+
+  const methods = [
+    {
+      id: "password",
+      label: "Mot de passe",
+      description: "Email et mot de passe",
+      icon: <KeyRound size={16} />,
+      action: () => auth.login({ provider: "password" }),
+    },
+    {
+      id: "passkey",
+      label: "Passkey",
+      description: "Clé biométrique / FIDO2",
+      icon: <Fingerprint size={16} />,
+      action: () => auth.passkey.login(),
+    },
+    {
+      id: "qr",
+      label: "QR Code",
+      description: "Scanner depuis un appareil mobile",
+      icon: <QrCode size={16} />,
+      action: () => auth.login({ provider: "qr" }),
+    },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 dark:bg-black/70 backdrop-blur-sm">
+      <div className="bg-white dark:bg-[#111113] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-8">
+        {/* Header */}
+        <div className="flex flex-col items-center gap-3 mb-8">
+          <div className="bg-indigo-50 dark:bg-indigo-500/10 p-3 rounded-2xl border border-indigo-100 dark:border-indigo-500/20">
+            <TerminalSquare
+              className="text-indigo-600 dark:text-indigo-400"
+              size={22}
+            />
+          </div>
+          <div className="text-center">
+            <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Punch
+              <span className="text-indigo-600 dark:text-indigo-400">
+                Master
+              </span>
+            </h2>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Connectez-vous pour continuer
+            </p>
+          </div>
+        </div>
+
+        {/* Login options */}
+        <div className="flex flex-col gap-2.5">
+          {methods.map(({ id, label, description, icon, action }) => (
+            <button
+              key={id}
+              onClick={action}
+              className="flex items-center gap-4 w-full px-4 py-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-100 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-all group"
+            >
+              <div className="p-2 rounded-lg bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 dark:text-slate-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:border-indigo-200 dark:group-hover:border-indigo-500/30 transition-colors">
+                {icon}
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold">{label}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">
+                  {description}
+                </p>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

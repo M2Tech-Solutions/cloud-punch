@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { Play, Square, Timer } from "lucide-react";
 import { useProjects } from "@hooks/project";
-import { GET as getTasks } from "@api/admin/task";
+import { GET as getTasks } from "@api/task";
+import { GET as getPunchState } from "@api/punch";
 import { PUT as updateWorktime } from "@api/worktime";
 import type { TaskType } from "@db/schema";
+import { useAuth } from "@auth";
 
 export default function IndexPage() {
   const [projectId, setProjectId] = useState<number | null>(null);
@@ -14,18 +16,20 @@ export default function IndexPage() {
   const [tasks, setTasks] = useState<TaskType[]>([]);
 
   const { projects, loading: loadingProjects } = useProjects();
-
+  const auth = useAuth();
   useEffect(() => {
-    const storedState = localStorage.getItem("punch-master-timer");
-    if (storedState) {
-      const parsed = JSON.parse(storedState);
-      if (parsed.isPunching && parsed.startTime) {
-        setIsPunching(true);
-        setStartTime(parsed.startTime);
-        setProjectId(parsed.projectId);
-        setTaskId(parsed.taskId);
-      }
-    }
+    auth.addInitializationListener("punch-page", (client) => {
+      if (!client.isAuthenticated) return;
+      getPunchState().then((res) => {
+        if (res.success && res.record) {
+          const { projectId, taskId, punchIn } = res.record;
+          setProjectId(projectId);
+          setTaskId(taskId);
+          setStartTime(punchIn);
+          setIsPunching(!!punchIn);
+        }
+      });
+    });
   }, []);
 
   useEffect(() => {
