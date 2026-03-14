@@ -18,19 +18,17 @@ export default function IndexPage() {
   const { projects, loading: loadingProjects } = useProjects();
   const auth = useAuth();
   useEffect(() => {
-    auth.addInitializationListener("punch-page", (client) => {
-      if (!client.isAuthenticated) return;
-      getPunchState().then((res) => {
-        if (res.success && res.record) {
-          const { projectId, taskId, punchIn } = res.record;
-          setProjectId(projectId);
-          setTaskId(taskId);
-          setStartTime(punchIn);
-          setIsPunching(!!punchIn);
-        }
-      });
+    if (!auth.isAuthenticated) return;
+    getPunchState().then((res) => {
+      if (res.success && res.record) {
+        const { projectId, taskId, punchIn } = res.record;
+        setProjectId(projectId);
+        setTaskId(taskId);
+        setStartTime(punchIn);
+        setIsPunching(!!punchIn);
+      }
     });
-  }, []);
+  }, [auth.isAuthenticated]);
 
   useEffect(() => {
     if (!projectId) {

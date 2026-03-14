@@ -67,7 +67,7 @@ export function useAuth(): ClientType {
       setState(Math.random().toString(36).substring(2));
     });
     return () => {
-      //client.removeInitializationListener(id);
+      client.removeInitializationListener(id);
     };
   }, []);
 
